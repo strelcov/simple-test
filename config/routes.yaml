@@ -1,0 +1,22 @@
+createBook:
+    path: /book/create
+    controller: App\Controller\ApiController::createBook
+    methods: POST
+
+createAuthor:
+    path: /author/create
+    controller: App\Controller\ApiController::createAuthor
+    methods: POST
+
+bookSearch:
+    path: /book/search
+    controller: App\Controller\ApiController::bookSearch
+    methods: GET
+
+book:
+    path: /{lang}/book/{id}
+    controller: App\Controller\ApiController::book
+    methods: GET
+    requirements:
+        id: \d+
+        lang: en|ru

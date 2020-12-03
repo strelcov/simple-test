@@ -1,0 +1,35 @@
+version: '2.2'
+
+services:
+
+    db:
+        restart: unless-stopped
+        labels:
+            kind: system
+        image: postgres:12-alpine
+        volumes:
+            - "./.data:/var/lib/postgresql/data"
+
+        environment:
+            POSTGRES_USER: test
+            POSTGRES_PASSWORD: test
+            PGDATA: /var/lib/postgresql/data/pgdata
+        ports:
+            - 21120:5432
+
+    php:
+        restart: always
+        build:
+            context: ./docker/php
+        links:
+            - db
+        volumes:
+            - "./:/var/www/simple_test"
+
+    nginx:
+        build: ./docker/nginx
+        volumes_from:
+            - "php:ro"
+        ports:
+            - "8081:80"
+
