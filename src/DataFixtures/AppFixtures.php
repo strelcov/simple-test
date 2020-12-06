@@ -15,7 +15,7 @@ use Gedmo\Translatable\Entity\Translation;
 class AppFixtures extends Fixture
 {
     public const BATCH_SIZE = 200;
-    public const COUNT = 1000;
+    public const COUNT = 10000;
     public const COUNT_AUTHORS_FOR_BOOK_LIMIT = 3;
 
     public function load(ObjectManager $em): void
@@ -30,10 +30,10 @@ class AppFixtures extends Fixture
             $em->persist($author);
             $authors->add($author);
 
-            $book = (new Book())
-                ->setName($fakerRu->company)
-                ->setAuthors($authors);
-            $tranRepository->translate($book, 'name', 'en', $fakerEn->company);
+            $book = (new Book())->setAuthors($authors);
+            $tranRepository
+                ->translate($book, 'name', 'ru', $fakerRu->company)
+                ->translate($book, 'name', 'en', $fakerEn->company);
 
             $em->persist($book);
 
