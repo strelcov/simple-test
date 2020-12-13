@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
@@ -27,7 +28,7 @@ class Book
      * @ORM\GeneratedValue(strategy="AUTO")
      * @ORM\Column(name="id", type="integer", nullable=false)
      * @Serializer\Groups({"get"})
-     * @Serializer\Type("string")
+     * @Serializer\Type("int")
      */
     private int $id;
 
@@ -46,26 +47,22 @@ class Book
      *     inverseJoinColumns={@ORM\JoinColumn(name="author_id", referencedColumnName="id", onDelete="CASCADE")}
      * )
      * @ORM\OrderBy({"id" = "ASC"})
-     * @Serializer\Groups({"get"})
-     * @Serializer\Accessor(getter="getAuthorsArray")
-     * @Serializer\Type("array")
+     * @Serializer\Groups({"get", "set"})
+     * @Serializer\Accessor(getter="getAuthorsArray", setter="setAuthorsArray")
+     * @Serializer\Type("array<App\Entity\Author>")
      */
-    protected Collection $authors;
+    protected ?Collection $authors = null;
 
     /**
      * @Gedmo\Locale
      */
     private ?string $locale = null;
 
-    public static function loadValidatorMetadata(ClassMetadata $metadata)
+    public static function loadValidatorMetadata(ClassMetadata $metadata): void
     {
-        $metadata->addPropertyConstraint('name', new Assert\NotBlank([
-            'message' => 'Поле должно быть заполнено',
-        ]));
-        $metadata->addPropertyConstraint('name', new Assert\Length([
-            'max' => 255,
-            'maxMessage' => 'Максимальная длина поля 255 символов',
-        ]));
+        $metadata->addPropertyConstraint('name', new Assert\NotBlank());
+        $metadata->addPropertyConstraint('name', new Assert\Length(['max' => 255]));
+        $metadata->addPropertyConstraint('authors', new Assert\Valid());
     }
 
     public function getName(): string
@@ -87,17 +84,24 @@ class Book
 
     public function getAuthors(): Collection
     {
-        return $this->authors;
-    }
-
-    public function getAuthorsArray(): array
-    {
-        return $this->authors->toArray();
+        return $this->authors ?? new ArrayCollection();
     }
 
     public function setAuthors(Collection $authors): self
     {
         $this->authors = $authors;
+
+        return $this;
+    }
+
+    public function getAuthorsArray(): array
+    {
+        return null === $this->authors ? [] : $this->authors->toArray();
+    }
+
+    public function setAuthorsArray(array $authors): self
+    {
+        $this->authors = new ArrayCollection($authors);
 
         return $this;
     }

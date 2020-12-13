@@ -26,3 +26,11 @@ services:
     App\Controller\:
         resource: '../src/Controller/'
         tags: ['controller.service_arguments']
+
+    app.jms_doctrine_object_constructor:
+        class: App\Service\JMSDoctrineObjectConstructor
+        arguments: [ '@doctrine', '@jms_serializer.unserialize_object_constructor' ]
+
+    jms_serializer.object_constructor:
+        alias: app.jms_doctrine_object_constructor
+        public: false

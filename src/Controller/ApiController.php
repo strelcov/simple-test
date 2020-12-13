@@ -4,58 +4,98 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\Author;
 use App\Entity\Book;
+use App\Service\ResponseManager;
+use App\Service\SerializeManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\Entity\Translation;
-use JMS\Serializer\SerializationContext;
-use JMS\Serializer\SerializerInterface;
+use JMS\Serializer\Exception\RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Serializer\Exception\NotEncodableValueException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class ApiController extends AbstractController
 {
     private EntityManagerInterface $em;
-    private SerializerInterface $serializer;
+    private SerializeManager $serializeManager;
     private ValidatorInterface $validator;
+    private ResponseManager $responseManager;
 
     public function __construct(
         EntityManagerInterface $em,
-        SerializerInterface $serializer,
-        ValidatorInterface $validator
+        SerializeManager $serializeManager,
+        ValidatorInterface $validator,
+        ResponseManager $responseManager
     ) {
         $this->em = $em;
-        $this->serializer = $serializer;
+        $this->serializeManager = $serializeManager;
         $this->validator = $validator;
+        $this->responseManager = $responseManager;
     }
 
     public function createBook(Request $request): JsonResponse {
-        $name = $request->request->get('name');
-        if (null === $name) {
-            return new JsonResponse(['success' => false, 'message' => 'Parameter name not found'], 400);
+        try {
+            /** @var Book $book */
+            $book = $this->serializeManager->deserializeEntityFromJson(
+                $request->getContent(),
+                Book::class,
+                ['set']
+            );
+        } catch (NotEncodableValueException|RuntimeException $e) {
+            return $this->responseManager->jsonResponse(
+                ['success' => false, 'errorMsg' => 'Invalid request data'],
+                400
+            );
         }
 
-        $book = (new Book())->setName($name);
         $errors = $this->validator->validate($book);
         if ($errors->count() > 0) {
-            //Не стал отображать ошибки валидации для экономии времени
-            return new JsonResponse(['success' => false, 'message' => 'Validation error'], 400);
+            return $this->responseManager->invalidJsonResponse('Validation error', $errors);
         }
 
-        $serializeBook = $this->serializer->toArray(
-            $book,
-            SerializationContext::create()->setGroups(['get'])
-        );
+        $book->setTranslatableLocale('ru');
+        $this->em->persist($book);
+        $this->em->flush();
 
-        return new jsonResponse([
+        $serializeBook = $this->serializeManager->toArray($book, ['get']);
+
+        return $this->responseManager->jsonResponse([
             'success' => true,
             'book' => $serializeBook,
         ], 200);
     }
 
     public function createAuthor(Request $request): JsonResponse {
-        return new JsonResponse(['stub' => '1']);
+        try {
+            $author = $this->serializeManager->deserializeEntityFromJson(
+                $request->getContent(),
+                Author::class,
+                ['set']
+            );
+        } catch (NotEncodableValueException|RuntimeException $e) {
+            return $this->responseManager->jsonResponse(
+                ['success' => false, 'errorMsg' => 'Invalid request data'],
+                400
+            );
+        }
+
+        $errors = $this->validator->validate($author);
+        if ($errors->count() > 0) {
+            return $this->responseManager->invalidJsonResponse('Validation error', $errors);
+        }
+
+        $this->em->persist($author);
+        $this->em->flush();
+
+        $serializeAuthor = $this->serializeManager->toArray($author, ['get']);
+
+        return $this->responseManager->jsonResponse([
+            'success' => true,
+            'author' => $serializeAuthor,
+        ], 200);
     }
 
     public function bookSearch(Request $request): JsonResponse {
@@ -65,21 +105,18 @@ class ApiController extends AbstractController
     public function book(int $id, string $lang): JsonResponse {
         $book = $this->em->find(Book::class, $id);
         if (null === $book) {
-            return new JsonResponse(['success' => false, 'message' => 'Not found'], 404);
+            return $this->responseManager->notFoundResponse();
         }
         $transRepository = $this->em->getRepository(Translation::class);
         $translations = $transRepository->findTranslations($book);
         if (empty($translations[$lang])) {
-            return new JsonResponse(['success' => false, 'message' => 'Not found'], 404);
+            return $this->responseManager->notFoundResponse("Record for '$lang' locale not found");
         }
         $book->setName($translations[$lang]['name']);
 
-        $serializeBook = $this->serializer->toArray(
-            $book,
-            SerializationContext::create()->setGroups(['get'])
-        );
+        $serializeBook = $this->serializeManager->toArray($book, ['get']);
 
-        return new jsonResponse([
+        return $this->responseManager->jsonResponse([
             'success' => true,
             'book' => $serializeBook,
         ], 200);

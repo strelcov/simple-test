@@ -3,6 +3,7 @@ version: '2.2'
 services:
 
     db:
+        container_name: "simple_test_pg"
         restart: unless-stopped
         labels:
             kind: system
@@ -32,4 +33,3 @@ services:
             - "php:ro"
         ports:
             - "8081:80"
-

@@ -22,7 +22,7 @@ class Author
      * @ORM\GeneratedValue(strategy="AUTO")
      * @ORM\Column(name="id", type="integer", nullable=false)
      * @Serializer\Groups({"get"})
-     * @Serializer\Type("string")
+     * @Serializer\Type("int")
      */
     private int $id;
 
@@ -31,22 +31,17 @@ class Author
      * @Serializer\Groups({"get", "set"})
      * @Serializer\Type("string")
      */
-    private string $name;
+    private string $name = '';
 
     public function __construct(string $name)
     {
         $this->name = $name;
     }
 
-    public static function loadValidatorMetadata(ClassMetadata $metadata)
+    public static function loadValidatorMetadata(ClassMetadata $metadata): void
     {
-        $metadata->addPropertyConstraint('name', new Assert\NotBlank([
-            'message' => 'Поле должно быть заполнено',
-        ]));
-        $metadata->addPropertyConstraint('name', new Assert\Length([
-            'max' => 255,
-            'maxMessage' => 'Максимальная длина поля 255 символов',
-        ]));
+        $metadata->addPropertyConstraint('name', new Assert\NotBlank());
+        $metadata->addPropertyConstraint('name', new Assert\Length(['max' => 255]));
     }
 
     public function __toString(): string {
