@@ -54,6 +54,9 @@ class JMSDoctrineObjectConstructor implements ObjectConstructorInterface
 
         if (array_key_exists('id', $identifierList) && $identifierList['id']) {
             $object = $objectManager->find($metadata->name, $identifierList);
+            if (null === $object) {
+                throw new \RuntimeException("Object with id {$identifierList['id']} not found");
+            }
         } else {
             $object = new $metadata->name;
         }

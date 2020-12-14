@@ -10,7 +10,6 @@ use App\Service\ResponseManager;
 use App\Service\SerializeManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\Entity\Translation;
-use JMS\Serializer\Exception\RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -44,7 +43,7 @@ class ApiController extends AbstractController
                 Book::class,
                 ['set']
             );
-        } catch (NotEncodableValueException|RuntimeException $e) {
+        } catch (NotEncodableValueException|\RuntimeException $e) {
             return $this->responseManager->jsonResponse(
                 ['success' => false, 'errorMsg' => 'Invalid request data'],
                 400
@@ -75,7 +74,7 @@ class ApiController extends AbstractController
                 Author::class,
                 ['set']
             );
-        } catch (NotEncodableValueException|RuntimeException $e) {
+        } catch (NotEncodableValueException|\RuntimeException $e) {
             return $this->responseManager->jsonResponse(
                 ['success' => false, 'errorMsg' => 'Invalid request data'],
                 400
