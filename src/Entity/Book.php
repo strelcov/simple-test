@@ -41,7 +41,7 @@ class Book
     private string $name;
 
     /**
-     * @ORM\ManyToMany(targetEntity="Author")
+     * @ORM\ManyToMany(targetEntity="Author", cascade={"persist"})
      * @ORM\JoinTable(name="i_author_book",
      *     joinColumns={@ORM\JoinColumn(name="book_id", referencedColumnName="id", onDelete="CASCADE")},
      *     inverseJoinColumns={@ORM\JoinColumn(name="author_id", referencedColumnName="id", onDelete="CASCADE")}
