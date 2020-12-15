@@ -29,3 +29,7 @@ migrate_schema:
 diff_schema:
 	@echo "==> Run Diff"
 	@$(COMMAND) -f docker-compose.yml run --rm --no-deps php bin/console doctrine:migrations:diff
+
+test:
+	@echo "==> Run tests"
+	@$(COMMAND) -f docker-compose.yml run --rm --no-deps php ./bin/phpunit
